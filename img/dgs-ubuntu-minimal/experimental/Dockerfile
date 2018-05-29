@@ -46,6 +46,7 @@ RUN dpkg --add-architecture i386 \
 		# wine \
 	    wine32=3.0-1ubuntu1 \
 	    wine64=3.0-1ubuntu1 \
+	    wine-stable=3.0-1ubuntu1 \
 	    # for crudini \
 	    python-iniparse \
  && rm -rf /var/lib/apt/lists/*

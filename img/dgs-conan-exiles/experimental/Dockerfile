@@ -50,9 +50,9 @@ ARG no_proxy
 
 RUN steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir /dgs/exiles +login anonymous +app_update 443030 validate +quit
 
-RUN wine64 /dgs/exiles/ConanSandboxServer.exe -log -Port=27030 -QueryPort=27015 \
+RUN wine /dgs/exiles/ConanSandboxServer.exe -log -Port=27030 -QueryPort=27015 \
 	&& sleep 120 \
-	&& kill -SIGINT $(pgrep 'ConanSandboxServer.exe')
+	&& kill -SIGINT $(pgrep 'ConanSandboxServer.exe') \
 	&& sleep 30 \
 	&& kill -SIGINT $(pgrep 'ConanSandboxServer.exe')
 
