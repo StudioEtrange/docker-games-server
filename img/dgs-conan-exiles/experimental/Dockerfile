@@ -93,8 +93,8 @@ EXPOSE 22
 EXPOSE 8181
 
 # Conan Exiles
-EXPOSE ${DGS_GAME_PORT}
-EXPOSE ${DGS_STEAM_PORT}
+EXPOSE ${DGS_VAR_GAME_PORT}
+EXPOSE ${DGS_VAR_STEAM_PORT}
 
 # entrypoint
 COPY img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
