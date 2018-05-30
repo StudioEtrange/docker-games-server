@@ -9,6 +9,8 @@ ENV DGS_IMAGE_TREE_ROOT "dgs-ubuntu-base"
 ENV DGS_IMAGE_NAME "dgs-ubuntu-base"
 ENV DGS_IMAGE_VERSION "experimental"
 
+ENV PATH /dgs/bin:${PATH}
+
 LABEL com.studioetrange.dgs 1
 LABEL com.studioetrange.dgs.base "${DGS_IMAGE_BASE}"
 LABEL com.studioetrange.dgs.type "${DGS_IMAGE_TYPE}"
@@ -26,7 +28,7 @@ ARG NO_PROXY
 ARG no_proxy
 
 # TREE FILESYSTEM --------------------------------------------------
-RUN mkdir -p /etc/supervisor && mkdir -p /var/log/supervisor && mkdir -p /dgs && mkdir -p /volumes
+RUN mkdir -p /etc/supervisor && mkdir -p /var/log/supervisor && mkdir -p /dgs && mkdir -p /dgs/bin && mkdir -p /volumes
 
 
 # COMPONENTS -------------------------------------------------------
@@ -85,7 +87,7 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
     tmux sqlite \
    && npm install -g forever && npm cache clean --force \
-   && git clone --depth=5 https://github.com/c9/core.git /root/.c9 \
+   && git clone https://github.com/StudioEtrange/core /root/.c9 \
    && cd /root/.c9 \
    && git checkout 15911b3ed65e69efd27d19683a2ac90c69ca4242 \
    && mkdir -p ./node/bin ./bin ./node_modules \

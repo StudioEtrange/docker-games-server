@@ -37,8 +37,8 @@ ARG no_proxy
 
 # Wine
 # https://linuxconfig.org/install-wine-on-ubuntu-18-04-bionic-beaver-linux
-# 
-#  
+#
+#
 RUN dpkg --add-architecture i386 \
 		&& apt-get update && apt-get install -y --no-install-recommends \
 		# for steamcmd \
@@ -68,3 +68,27 @@ RUN mkdir -p /dgs/crudini \
     && curl -fkSL https://raw.githubusercontent.com/StudioEtrange/crudini/0.9/crudini -o /dgs/crudini/crudini \
     && chmod +x /dgs/crudini/crudini
 
+
+
+# shell functions
+ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_base.sh /dgs/bin/dgs_functions_base.sh
+
+
+# SUPERVISOR ---------------------------------------------------------
+
+# DOCKER RUN PARAMETERS ----------------------------------------------
+
+# supervisor web interface
+EXPOSE 9999
+# SSH server
+EXPOSE 22
+# Cloud9
+EXPOSE 8181
+
+# entrypoint
+COPY img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# default command
+CMD ["supervisord", "-c", "/etc/supervisor/supervisord.conf", "-n"]

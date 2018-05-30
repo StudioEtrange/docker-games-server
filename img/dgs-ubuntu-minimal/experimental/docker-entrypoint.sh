@@ -30,15 +30,15 @@ fi
 
 # supervisord need some env var
 if [ "$1" = "supervisord" ]; then
-  # cloud security
+  # cloud9 security
   if [ "$PASSWORD" = "" ]; then
     export C9_SECURITY="--auth :"
   else
     export C9_SECURITY="--auth root:$PASSWORD"
   fi
 
-   # path and conda env
-  export PATH=${PATH}
+  # path
+  export PATH="${PATH}"
 fi
 
 exec "$@"

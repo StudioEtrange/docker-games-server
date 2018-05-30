@@ -16,6 +16,8 @@ echo 'export SHELL="$(which bash)"' >> /dgs/env.sh
 # welcome screen
 echo 'screenfetch 2>/dev/null' >> /dgs/env.sh
 
+# path
+echo "export PATH=${PATH}" >> /dgs/env.sh
 
 
 # SSH security
@@ -28,12 +30,15 @@ fi
 
 # supervisord need some env var
 if [ "$1" = "supervisord" ]; then
-  # cloud security
+  # cloud9 security
   if [ "$PASSWORD" = "" ]; then
     export C9_SECURITY="--auth :"
   else
     export C9_SECURITY="--auth root:$PASSWORD"
   fi
+
+  # path
+  export PATH="${PATH}"
 fi
 
 exec "$@"
