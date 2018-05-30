@@ -9,11 +9,13 @@ ENV DGS_IMAGE_TREE_ROOT "dgs-ubuntu-base"
 ENV DGS_IMAGE_NAME "dgs-conan-exiles"
 ENV DGS_IMAGE_VERSION "experimental"
 
-ENV DGS_APP_ID 443030
-ENV DGS_GAME_PORT 7777
-ENV DGS_STEAM_PORT 27030
-ENV DGS_INSTALL_DIR /dgs/exiles
-
+ENV DGS_VAR_APP_ID 443030
+ENV DGS_VAR_GAME_PORT 7777
+ENV DGS_VAR_STEAM_PORT 27030
+ENV DGS_VAR_INSTALL_DIR /dgs/exiles
+ENV DGS_VAR_MAX_PLAYERS 40
+ENV DGS_VAR_SERVER_NAME conan-exiles
+ENV DGS_VAR_ADMIN_PASSWORD
 
 LABEL com.studioetrange.dgs 1
 LABEL com.studioetrange.dgs.base "${DGS_IMAGE_BASE}"
@@ -22,9 +24,9 @@ LABEL com.studioetrange.dgs.tree-root "${DGS_IMAGE_TREE_ROOT}"
 LABEL com.studioetrange.dgs.name "${DGS_IMAGE_NAME}"
 LABEL com.studioetrange.dgs.version "${DGS_IMAGE_VERSION}"
 
-LABEL com.studioetrange.dgs.appid "${DGS_APP_ID}"
-LABEL com.studioetrange.dgs.gameport "${DGS_GAME_PORT}"
-LABEL com.studioetrange.dgs.steamport "${DGS_STEAM_PORT}"
+LABEL com.studioetrange.dgs.appid "${DGS_VAR_APP_ID}"
+LABEL com.studioetrange.dgs.gameport "${DGS_VAR_GAME_PORT}"
+LABEL com.studioetrange.dgs.steamport "${DGS_VAR_STEAM_PORT}"
 
 # BUILD TIME VARIABLES --------------------------------------------
 ARG HTTP_PROXY
@@ -47,7 +49,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # shell functions
-ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_conan-exiles.sh /dgs/bin/dgs_functions-conan-exiles.sh
+ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_conan-exiles.sh /dgs/bin/dgs_functions_conan-exiles.sh
 
 # GAME ------------------------------------------
 # install
@@ -61,20 +63,12 @@ ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_conan-exiles.sh /dg
 # pysteamcmd
 # https://github.com/david-maus/ConanServerManager/tree/master/_SRC
 
-
-
-
-
+# install
 RUN bash -c ". /dgs/bin/dgs_functions_conan-exiles.sh && dgs_install"
-#RUN steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir /dgs/exiles +login anonymous +app_update 443030 validate +quit
 
+# init
 RUN bash -c ". /dgs/bin/dgs_functions_conan-exiles.sh && dgs_init"
 
-#RUN wine /dgs/exiles/ConanSandboxServer.exe -log -Port=27030 -QueryPort=27015 \
-#	&& sleep 120 \
-#	&& kill -SIGINT $(pgrep 'ConanSandboxServer.exe') \
-#	&& sleep 30 \
-#	&& kill -SIGINT $(pgrep 'ConanSandboxServer.exe')
 
 #RUN crudini --set config_file section parameter value
 

@@ -1,4 +1,15 @@
 
+# create instruction to export all DGS_VAR_* variables
+dgs_build_export_var() {
+
+  _export_string=""
+
+  for var in ${!DGS_VAR@}; do
+    _export_string="${_export_string}export ${var}=${!var};"
+  done
+
+  echo "${_export_string}"
+}
 
 
 dgs_start() {

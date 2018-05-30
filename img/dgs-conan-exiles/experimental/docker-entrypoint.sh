@@ -19,12 +19,12 @@ echo 'screenfetch 2>/dev/null' >> /dgs/env.sh
 # path
 echo "export PATH=${PATH}" >> /dgs/env.sh
 
-# dgs
-echo "export DGS_APP_ID=${DGS_APP_ID}" >> /dgs/env.sh
-echo "export DGS_INSTALL_DIR=${DGS_INSTALL_DIR}" >> /dgs/env.sh
-echo "export DGS_GAME_PORT=${DGS_GAME_PORT}" >> /dgs/env.sh
-echo "export DGS_STEAM_PORT=${DGS_STEAM_PORT}" >> /dgs/env.sh
-echo "export DGS_START_OPTIONS=${DGS_START_OPTIONS}" >> /dgs/env.sh
+# import dgs functions
+. dgs_functions_conan-exiles.sh
+
+# export DGS_VAR into env.sh
+dgs_build_export_var >> /dgs/env.sh
+
 
 # SSH security
 if [ "$PASSWORD" = "" ]; then
@@ -46,19 +46,8 @@ if [ "$1" = "supervisord" ]; then
   # path
   export PATH="${PATH}"
 
-  # dgs_options
-  export DGS_APP_ID="${DGS_APP_ID}"
-  export DGS_INSTALL_DIR="${DGS_INSTALL_DIR}"
-  export DGS_GAME_PORT="${DGS_GAME_PORT}"
-  export DGS_STEAM_PORT="${DGS_STEAM_PORT}"
-  export DGS_START_OPTIONS="${DGS_START_OPTIONS}"
+  # export all DGS_VAR_* into supervisord context
+  eval "$(dgs_build_export_var)"
 fi
-
-case $1 in
-  dgs_* )
-    . dgs_functions_conan-exiles.sh
-    ;;
-esac
-
 
 exec "$@"
