@@ -1,3 +1,4 @@
+#!/bin/bash
 
 # create instruction to export all DGS_VAR_* variables
 dgs_build_export_var() {

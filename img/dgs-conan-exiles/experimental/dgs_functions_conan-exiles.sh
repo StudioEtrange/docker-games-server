@@ -1,3 +1,4 @@
+#!/bin/bash
 
 . dgs_functions_base.sh
 
@@ -28,11 +29,12 @@ dgs_start() {
 }
 
 dgs_stop() {
-  kill -s SIGINT $(pgrep -f  'Z:\\.*\\ConanSandboxServer.exe') 2>/dev/null
+  kill -s SIGINT $(pgrep -f  'Z:\\.*\\ConanSandboxServer.exe')
+  #2>/dev/null
 }
 
 dgs_init() {
-  dgs_start
+  dgs_start &
   sleep 120
   dgs_stop
   sleep 30
@@ -43,9 +45,8 @@ dgs_update() {
   dgs_install
 }
 
-# dgs_install 443030 /dgs/exiles
 dgs_install() {
-  steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "${DGS_INSTALL_DIR}" +login anonymous +app_update "${DGS_APP_ID}" validate +quit
+  steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir "${DGS_VAR_INSTALL_DIR}" +login anonymous +app_update "${DGS_VAR_APP_ID}" validate +quit
 }
 
 dgs_install_mod() {
