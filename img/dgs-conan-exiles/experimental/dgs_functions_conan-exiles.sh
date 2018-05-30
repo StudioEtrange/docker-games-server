@@ -1,4 +1,5 @@
 
+. /dgs/bin/dgs_functions_base.sh
 
 # dgs_start Port 27930 QueryPort 27015 MaxPlayers 40 AdminPassword pass ServerName MonServeur
 # Start server Options
@@ -26,19 +27,19 @@ dgs_start() {
 }
 
 dgs_stop() {
-  kill -SIGINT $(pgrep 'ConanSandboxServer.exe')
+  kill -s SIGINT $(pgrep 'ConanSandboxServer.exe')
 }
 
 dgs_init() {
-  start
+  dgs_start
   sleep 120
-  stop
+  dgs_stop
   sleep 30
-  stop
+  dgs_stop
 }
 
 dgs_update() {
-  install
+  dgs_install
 }
 
 # dgs_install 443030 /dgs/exiles

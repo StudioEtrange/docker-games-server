@@ -41,7 +41,7 @@ ARG no_proxy
 
 # COMPONENTS ------------------------------------
 # shell functions
-ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions.sh /dgs/bin/dgs_functions.sh
+ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions-conan-exiles.sh /dgs/bin/dgs_functions-conan-exiles.sh
 
 # GAME ------------------------------------------
 # install
@@ -61,10 +61,10 @@ ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions.sh /dgs/bin/dgs_fun
 
 
 
-RUN bash -c ". dgs_functions.sh && dgs_install"
+RUN bash -c ". /dgs/bin/dgs_functions_conan-exiles.sh && dgs_install"
 #RUN steamcmd.sh +@sSteamCmdForcePlatformType windows +force_install_dir /dgs/exiles +login anonymous +app_update 443030 validate +quit
 
-RUN bash -c ". dgs_functions.sh && dgs_init"
+RUN bash -c ". /dgs/bin/dgs_functions_conan-exiles.sh && dgs_init"
 
 #RUN wine /dgs/exiles/ConanSandboxServer.exe -log -Port=27030 -QueryPort=27015 \
 #	&& sleep 120 \
