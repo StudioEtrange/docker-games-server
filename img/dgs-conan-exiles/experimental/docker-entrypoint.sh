@@ -56,7 +56,7 @@ fi
 
 case $1 in
   dgs_* )
-    . dgs_functions.sh
+    . dgs_functions_conan-exiles.sh
     ;;
 esac
 

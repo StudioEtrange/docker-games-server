@@ -23,7 +23,7 @@ dgs_start() {
     fi
   done
 
-  wine "${DGS_INSTALL_DIR}/"ConanSandboxServer.exe -log "${_opt}"
+  xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' wine "${DGS_INSTALL_DIR}/"ConanSandboxServer.exe -log "${_opt}"
 }
 
 dgs_stop() {

@@ -40,8 +40,14 @@ ARG no_proxy
 
 
 # COMPONENTS ------------------------------------
+# Base packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    screen \
+    xvfb \
+    && rm -rf /var/lib/apt/lists/*
+
 # shell functions
-ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions-conan-exiles.sh /dgs/bin/dgs_functions-conan-exiles.sh
+ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_conan-exiles.sh /dgs/bin/dgs_functions-conan-exiles.sh
 
 # GAME ------------------------------------------
 # install
@@ -55,9 +61,7 @@ ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions-conan-exiles.sh /dg
 # pysteamcmd
 # https://github.com/david-maus/ConanServerManager/tree/master/_SRC
 
-#RUN apt-get update && apt-get install -y --no-install-recommends \
-#		xvfb
-# && rm -rf /var/lib/apt/lists/*
+
 
 
 
