@@ -26,19 +26,9 @@ dgs_start() {
   done
 
   # https://unix.stackexchange.com/questions/291804/howto-terminate-xvfb-run-properly
-  find_free_servernum() {
-    # Sadly, the "local" keyword is not POSIX.  Leave the next line commented in
-    # the hope Debian Policy eventually changes to allow it in /bin/sh scripts
-    # anyway.
-    #local i
-
-    i=$SERVERNUM
-    while [ -f /tmp/.X$i-lock ]; do
-        i=$(($i + 1))
-    done
-    echo $i
-  }
-  Xvfb :$(find_free_servernum) -screen 0, 640x480x24:32 wine "${DGS_VAR_INSTALL_DIR}/"ConanSandboxServer.exe -log ${_opt}
+  Xvfb :0 -screen 0, 640x480x24:32 &
+  export DISPLAY=:0
+  wine "${DGS_VAR_INSTALL_DIR}/"ConanSandboxServer.exe -log ${_opt}
   #xvfb-run --auto-servernum --server-args='-screen 0 640x480x24:32' wine "${DGS_VAR_INSTALL_DIR}/"ConanSandboxServer.exe -log ${_opt}
 }
 
@@ -46,8 +36,8 @@ dgs_start() {
 
 
 dgs_stop() {
-  kill -s SIGINT $(pgrep -f  'Z:\\.*\\ConanSandboxServer.exe')
-  #2>/dev/null
+  #kill -s SIGINT $(pgrep -f  'Z:\\.*\\ConanSandboxServer.exe')
+  kill -s SIGINT $(pgrep -f  'Xvfb.exe') 2>/dev/null
 }
 
 dgs_init() {
