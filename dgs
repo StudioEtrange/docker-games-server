@@ -1,0 +1,419 @@
+#!/usr/bin/env bash
+_CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+_CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
+STELLA_LOG_STATE="OFF"
+
+
+# ------------- GENERIC DEFAULT VALUES -------------
+DEFAULT_LOG_STATE="OFF"
+DEFAULT_CATALOG_HOME="$STELLA_APP_ROOT"
+DEFAULT_CATALOG_THIRD_PARTIES="docker-games-server-ctg"
+DEFAULT_DOCKER_PLUGIN_BINDFS="lebokus/bindfs:latest"
+DEFAULT_TIME_SYNC="1"
+
+# ------------- COMPUTE ARGUMENTS AND VALUES -------------------------
+[ "$DEBUG" = "1" ] && DGS_LOG_STATE="ON" || DGS_LOG_STATE="$DEFAULT_LOG_STATE"
+
+CATALOG_HOME="$DEFAULT_CATALOG_HOME"
+CATALOG_IMAGE_FOLDER="img"
+CATALOG_THIRD_PARTIES="$(find ${_CURRENT_FILE_DIR}/.. -maxdepth 0 -name "${DEFAULT_CATALOG_THIRD_PARTIES}*" -type d)"
+
+# COMMAND LINE ---------------------------------------------------------
+dgs_usage() {
+	# FROM OUTSIDE container + launch options + network options
+	echo "o--------- GAME SERVER ${DGS_VAR_GAME_ID} ---------"
+	echo "o---- Life cycle : "
+	echo "L     launch <instance id> [--version=<version>] [<network option>] [<game options>] : launch an instance of a game server."
+	echo "| 				game server options are : $(dgs_launch_options_helper)"
+	echo "| 				network options are : $(dgs_gameport_helper)"
+	echo "|         NOTE : options passed override default configuration made to the game."
+	echo "L     <stop|restart|destroy> <instance id>  : manage a game server."
+	echo "L     info <instance id> : give informations on a game server."
+	echo "L     list all : list all created games server."
+	echo "L     shell <instance id> : launch a shell inside a game server."
+	echo "| "
+	# FROM INSIDE container
+	echo "o---- Others commands : "
+	echo "L 		cmd <instance id> -- <command>"
+	echo "L 		cmd <instance id> -- update"
+	echo "L 		cmd <instance id> -- set-default-config <...>"
+	echo "L 		cmd <instance id> -- backup"
+
+	echo "o--------- GENERIC IMAGE COMMANDS ---------"
+	echo "o-- catalog management :"
+	echo "L     ctg-build <name|regexp> [--version=<version|regexp>] : build local image. could use regexp as name and version (i.e : dgs-ubuntu.*)."
+	echo "L     ctg-list <all|dgs|regexp> : list all available images in catalog, only dgs official images or search by regexp"
+	echo "o-- docker management :"
+	echo "L     docker deploy plugins : deploy all needed docker plugin on current host. [S/R]"
+}
+
+dgs_parse_command_line() {
+	PARAMETERS="
+	ACTION=											'action' 			a				'launch stop restart destroy info list shell cmd ctg-build ctg-list'
+	ID=												'' 					s				''
+	"
+	OPTIONS="
+	DEBUG=''            'd'    		''            		b     		0     		'1'           			Active dgs debug.
+	VERSION='' 						'' 			'string'				s 			0			''		  Force version.
+	"
+
+	OPTIONS="$(dgs_gameport_add "$OPTIONS")"
+
+	$STELLA_API argparse "$0" "$OPTIONS" "$PARAMETERS" "${DGS_VAR_GAME_ID}" "$(dgs_usage)" "APPARG" "$@"
+}
+
+dgs_execute_command_line() {
+	if [ "${ACTION}" = "launch" ]; then
+		echo "TODO"
+		dgs_game_launch "${DGS_VAR_GAME_ID}" "${ID}"
+	fi
+	if [ "${ACTION}" = "stop" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "restart" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "destroy" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "info" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "list" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "shell" ]; then
+		echo "TODO"
+	fi
+	if [ "${ACTION}" = "ctg-build" ]; then
+		echo "TODO"
+		dgs_ctg_build "${ID}" "${VERSION}"
+	fi
+	if [ "${ACTION}" = "ctg-list" ]; then
+		echo "TODO"
+	fi
+}
+
+
+# ------------- INTERNAL ----------------------------
+declare -A DGS_PORT_GAME
+# build an array of game port from label com.studioetrange.dgs.port.game
+#	DGS_PORT_GAME["<VAR NAME>"]=["<OPTIONS_NAME>":"<INTERNAL PORT>"]
+# i.e :
+#		Turn label value "7777:gameport 27015:steamport"
+#			DGS_PORT_GAME["GAMEPORT"]=["gameport":"7777"]
+#			DGS_PORT_GAME["STEAMPORT"]=["gameport":"27015"]
+dgs_gameport_array() {
+	_image="$1"
+	_port_game_list="$(dgs_get_docker_label "${image}" "com.studioetrange.dgs.port.game")"
+
+	for p in "${_port_game_list}"; do
+		_internal_port="${_p%%:*}"
+		_str="${_p%%:*}"
+		DGS_PORT_GAME["${_str^^}"]=["${_str}:${_internal_port}"]
+	done
+}
+
+# Add some string helper about port options from port game list
+dgs_gameport_helper() {
+	_help_string=""
+
+	for key in ${!DGS_PORT_GAME[@]}; do
+		_v=${DGS_PORT_GAME[$key]}
+		_str="${_v%%:*}"
+		#_internal_var="${_v##*:}"
+		_help_string="${_help_string} --${_v}"
+	done
+	echo "${_help_string}"
+}
+
+# Add some network options from port game list
+dgs_gameport_add() {
+	_options_list="$1"
+
+	for key in ${!DGS_PORT_GAME[@]}; do
+		_options="
+		${key}=''				''			'string'			's'			0				''		Network option.
+		"
+		${_options_list}="${_options_list}${_options}"
+	done
+	echo "${_options_list}"
+}
+
+dgs_gameport_docker() {
+	_port_options=""
+
+	for key in ${!DGS_PORT_GAME[@]}; do
+		_v=${DGS_PORT_GAME[$key]}
+		if [ ! "${#_v}" = "" ]; then
+			#_str="${_v%%:*}"
+			_internal_port="${_v##*:}"
+			_port_options="${_port_options} -p ${#_v}:${_internal_port}"
+		fi
+	done
+	echo "${_port_options}"
+}
+
+
+declare -A DGS_LAUNCH_OPTIONS
+# build an array of public launch options from label com.studioetrange.dgs.public.launch-options
+# 	DGS_LAUNCH_OPTIONS["<VAR_NAME>"]=["<OPTIONS_NAME>":"<CONTAINER ENV VAR NAME>"]
+# i.e :
+#		Turn label value "maxplayers DGS_VAR_GAME_MAX_PLAYERS adminpassword DGS_VAR_GAME_ADMIN_PASSWORD"
+# 		DGS_LAUNCH_OPTIONS["MAXPLAYERS"]=["maxplayers":"DGS_VAR_GAME_MAX_PLAYERS"]
+# 		DGS_LAUNCH_OPTIONS["ADMINPASSWORD"]=["adminpassword":"DGS_VAR_GAME_ADMIN_PASSWORD"]
+dgs_launch_options_array() {
+	_image="$1"
+
+	_public_launch_options="$(dgs_get_docker_label "${_image}" "DGS_VAR_PUBLIC_LAUNCH_OPTIONS")"
+	f=0
+	for o in ${_public_launch_options}; do
+		if [ "$f" = "0" ]; then
+			_option_name="$o"
+			_var_name="${_option_name^^}"
+		else
+			_env_var_name="$o"
+			DGS_LAUNCH_OPTIONS[${_var_name}]=["${_option_name}:${_var_name}"]
+			f=1
+		fi
+	done
+}
+
+# Add some string helper about options from public launch options
+dgs_launch_options_helper() {
+	_help_string=""
+
+	for key in ${!DGS_LAUNCH_OPTIONS[@]}; do
+		_v=${DGS_LAUNCH_OPTIONS[$key]}
+		_str="${_v%%:*}"
+		#_internal_var="${_v##*:}"
+		_help_string="${_help_string} --${_v}"
+	done
+	echo "${_help_string}"
+}
+
+# Add some launch options from public launch options
+dgs_launch_options_add() {
+	_options_list="$1"
+
+	for key in ${!DGS_LAUNCH_OPTIONS[@]}; do
+		_options_list="${_options_list}
+		${key}=''				''			'string'			's'			0				''		Launcher option.
+		"
+	echo "${_options_list}"
+}
+
+# TODO : public commands
+# DGS_VAR_PUBLIC_COMMANDS "update set-default-config get-default-config backup restore auto-backup delete-backup"
+#dgs_public_commands_add() {
+#
+#}
+# ------------------------ VARIOUS ------------------------
+dgs_test_sudo() {
+	if [ $(id -u) -ne 0 ]; then
+		echo "** Please run as root or sudo"
+		exit 1
+	fi
+}
+
+# work even if we pass an ip
+dgs_convert_hostname_to_ip() {
+  echo "$(ping -c 1 $1 | gawk -F '[()]' '/PING/{print $2}')"
+}
+
+
+# get a specific label (or all labels) from an image or a container
+dgs_get_docker_label() {
+	__object_name="$1"
+	__label_name="$2"
+
+	__result=
+	[ "$__label_name" = "" ] && __result="$(docker inspect $__object_name | jq -r '.[0].Config.Labels')" \
+											|| __result="$(docker inspect $__object_name | jq -r '.[0].Config.Labels["'$__label_name'"]')"
+
+	[ "$__result" = "null" ] && __result=""
+
+	echo "$__result"
+}
+
+
+dgs_local_bindfs_volume_create() {
+	__volume_name="$1"
+	__local_path="$2"
+  # user uid inside container
+  __uid="$3"
+  # group gid inside container
+  __gid="$4"
+  [ "$__uid" = "" ] && __uid="0"
+  [ "$__gid" = "" ] && __gid="0"
+
+	dgs_log_run docker volume create --driver $DEFAULT_DOCKER_PLUGIN_BINDFS -o sourcePath=$__local_path -o map=$UID/$__uid:@$UID/@$__gid --name $__volume_name 2>/dev/null
+}
+
+
+dgs_log_run() {
+	[ "$DGS_LOG_STATE" = "ON" ] && echo ">" $@
+	"$@"
+}
+
+
+dgs_docker_plugins() {
+	echo "** Install docker volume plugin bindfs"
+	dgs_log_run docker plugin rm $DEFAULT_DOCKER_PLUGIN_BINDFS
+	dgs_log_run docker plugin install --grant-all-permissions $DEFAULT_DOCKER_PLUGIN_BINDFS
+
+	# enable plugin
+	dgs_log_run docker plugin enable $DEFAULT_DOCKER_PLUGIN_BINDFS
+}
+
+
+dgs_ctg_build() {
+	_name="$1"
+	_version="$2"
+	# NOTE : ARG in dockerfile are setted with docker build --build-arg A=B
+	#				 'ARG' value exist only while building image. This is not like 'ENV'.
+	if [ -d "$CATALOG_HOME" ]; then
+
+		[ ! "$_name" = "" ] && _filter=".*/$_name/" || _filter=".*/.*/"
+		[ ! "$_version" = "" ] && _filter="$_filter$_version" || _filter="${_filter}.*"
+
+		# priority on CATALOG_THIRD_PARTIES
+		for _c in $CATALOG_THIRD_PARTIES $CATALOG_HOME; do
+			cd "$_c"
+			for _l in $_c/$CATALOG_PLUGINS_FOLDER/*; do
+				_filtered=
+				[ -z "$(echo "$_l/Dockerfile" | grep -E "${_filter}/Dockerfile")" ] || _filtered=1
+				if [ "$_filtered" = "1" ]; then
+					_dockerfile_path="$_l/Dockerfile"
+					_ver="$(basename "$_l")"
+					_image_name="$(basename $(dirname "$_l"))"
+					echo "** Building ${_image_name}:${_ver}"
+					echo "** Using $_dockerfile_path"
+					dgs_log_run docker build -f "$_dockerfile_path" "$_c" -t "${_image_name}:${_ver}" \
+					--build-arg HTTP_PROXY="${HTTP_PROXY}" --build-arg HTTPS_PROXY="${HTTPS_PROXY}" \
+					--build-arg http_proxy="${http_proxy}" --build-arg https_proxy="${https_proxy}" \
+					--build-arg NO_PROXY="${NO_PROXY}" --build-arg no_proxy="${no_proxy}"
+				fi
+			done
+		done
+	else
+		echo " ** ERROR main catalog does not exist"
+	fi
+}
+
+dgs_ctg_list() {
+	echo "TODO REVIEW THIS!"
+}
+
+dgs_game_launch() {
+	_base="$1"
+	_instance_id="$2"
+
+	if [ "$_base" = "" ]; then
+		echo "** ERROR : please specify base image to use"
+		exit 1
+	fi
+
+	# get image from repository so we can retrieve labels
+	dgs_log_run docker pull $_base
+
+	VOL=
+	#if [ ! "$VOLUMELOCAL" = "" ]; then
+	#	VOLUMELOCAL="${VOLUMELOCAL//:/ }"
+	#	for v in $VOLUMELOCAL; do
+	#		if [ "${#ACTION}" -le "2" ]; then
+	#			echo "** ERROR : volume name size must be > 2"
+	#			exit 1
+	#		fi
+	#		dgs_local_bindfs_volume_create "$ACTION" "$VOLUMELOCAL"
+	#		VOL="$VOL --volume $ACTION:/volumes/local"
+	#	done
+	#fi
+
+	# Time sync with host
+	# https://serverfault.com/questions/683605/docker-container-time-timezone-will-not-reflect-changes
+	if [ "$DEFAULT_TIME_SYNC" = "1" ]; then
+		VOL="$VOL --volume /etc/timezone:/etc/timezone:ro"
+		VOL="$VOL --volume /etc/localtime:/etc/localtime:ro"
+	fi
+
+	dgs_log_run docker run -d --name $_instance_id -P \
+			-e PASSWORD=$PASSWORD \
+			-l com.studioetrange.dgs=1 -l com.studioetrange.dgs.type=env \
+			$OTHER_LABEL \
+			$VOL $APPARG $_base
+}
+dgs_game_restart() {
+	_instance_id="$1"
+	dgs_log_run docker start $_instance_id
+}
+dgs_game_stop() {
+	_instance_id="$1"
+	dgs_log_run docker stop $_instance_id
+}
+dgs_game_shell() {
+	_instance_id="$1"
+	dgs_log_run docker exec -it $_instance_id bash
+}
+dgs_game_destroy() {
+	_instance_id="$1"
+	dgs_log_run docker stop $_instance_id 2>/dev/null
+	dgs_log_run docker rm $_instance_id 2>/dev/null
+	# TODO : delete volumes ?
+	#dgs_log_run docker volume rm $_instance_id 2>/dev/null
+}
+
+
+dgs_game_info() {
+	_instance_id="$1"
+	echo "* GAME INFO *"
+	echo "==> Game id : $(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.game.id")"
+	echo "==> Game name : $(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.game.name")"
+	echo "==> Game steam app id : $(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.game.steam-appid")"
+	echo "|"
+	echo "|"
+	echo "|"
+	echo "* IMAGE INFO *"
+	echo "==> Name : $(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.name")"
+	echo "==> Version : $(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.version")"
+	echo "|"
+	echo "|"
+	echo "|"
+	echo "* NETWORK INFO *"
+	echo "** Game ports **"
+	_portlist="$(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.port.game")"
+	for k in $_portlist; do
+		_port="${k%%:*}"
+		_name="${k##*:}"
+		_mapped_port=$(docker inspect --format="{{(index (index .NetworkSettings.Ports "${_port}/tcp") 0).HostPort}}" $_instance_id)
+		echo "==> ${_name} port : ${_mapped_port}"
+	done
+	echo "|"
+	echo "** Admin/tools ports **"
+	_portlist="$(dgs_get_docker_label "$_instance_id" "com.studioetrange.dgs.port.generic")"
+	for k in $_portlist; do
+		_port="${k%%:*}"
+		_name="${k##*:}"
+		_mapped_port=$(docker inspect --format="{{(index (index .NetworkSettings.Ports "${_port}/tcp") 0).HostPort}}" $_instance_id)
+		echo "==> ${_name} port : ${_mapped_port}"
+	done
+	echo "|"
+	echo "** SSH access point **"
+	__ssh="$(docker inspect --format='{{(index (index .NetworkSettings.Ports "22/tcp") 0).HostPort}}' $_instance_id)"
+	echo "==>   IP : $(hostname)"
+	echo "==>   port : $__ssh"
+	echo "==>   ssh -l root -p $__ssh $(hostname)"
+	echo "|"
+	echo "** Container network information **"
+	__ip="$(docker inspect --format='{{(index .NetworkSettings.IPAddress)}}' $_instance_id)"
+	echo "==> Internal IP : $__ip"
+	echo "==> Mapping of all ports :"
+	echo "   internal port => external port"
+	dgs_log_run docker inspect --format='{{range $p, $conf := .NetworkSettings.Ports}} {{$p}} => {{(index $conf 0).HostPort}} {{end}}' $_instance_id
+}
+
+dgs_game_list() {
+	echo " ** List all existing games server created"
+	echo "ENV ------- BASE"
+	docker ps -a --filter=label=com.studioetrange.dgs=1 --format '{{.Names}}\t{{.Image}}'
+}

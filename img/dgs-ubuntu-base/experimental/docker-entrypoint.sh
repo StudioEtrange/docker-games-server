@@ -2,6 +2,8 @@
 set -e
 
 echo "#!/bin/bash" > /dgs/env.sh
+echo "echo 'FRON /dgs/env'" >> /dgs/env.sh
+
 # proxy env var
 [ ! "$HTTP_PROXY" = "" ] && echo "export HTTP_PROXY=$HTTP_PROXY" >> /dgs/env.sh
 [ ! "$HTTPS_PROXY" = "" ] && echo "export HTTPS_PROXY=$HTTPS_PROXY" >> /dgs/env.sh
@@ -18,6 +20,16 @@ echo 'screenfetch 2>/dev/null' >> /dgs/env.sh
 
 # path
 echo "export PATH=${PATH}" >> /dgs/env.sh
+
+# import dgs functions into env.sh
+for f in /dgs/lib/dgs_functions_*; do
+  echo ". ${f}" >> /dgs/env.sh
+done
+# export all DGS_VAR_* into env.sh
+echo 'eval "$(dgs_build_export_var)"' >> /dgs/env.sh
+
+# borg backup
+echo "export BORG_REPO=${DGS_VAR_BACKUP_ROOT}" >> /dgs/env.sh
 
 
 # SSH security
@@ -39,6 +51,13 @@ if [ "$1" = "supervisord" ]; then
 
   # path
   export PATH="${PATH}"
+
+  # import dgs functions into supervisord context
+  for f in /dgs/lib/dgs_functions_*; do
+    . ${f}
+  done
+  # export all DGS_VAR_* into supervisord context
+  eval "$(dgs_build_export_var)"
 fi
 
 exec "$@"

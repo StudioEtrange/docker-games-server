@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+_CURRENT_FILE_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+_CURRENT_RUNNING_DIR="$( cd "$( dirname "." )" && pwd )"
+STELLA_LOG_STATE="OFF"
+. $_CURRENT_FILE_DIR/stella-link.sh include
+. $_CURRENT_FILE_DIR/dgs
+
+# ------------- GENERIC DEFAULT VALUES -------------
+DGS_VAR_GAME_ID="dgs-conan-exiles"
+DGS_VAR_IMAGE_ID="${DGS_VAR_GAME_ID}"
+DGS_VAR_IMAGE_VERSION="experimental"
+
+# ------------ INIT INFO -------------
+dgs_launch_options_array "${DGS_VAR_GAME_ID}:${DGS_VAR_IMAGE_VERSION}"
+dgs_gameport_array "${DGS_VAR_GAME_ID}:${DGS_VAR_IMAGE_VERSION}"
+
+# ------------ MAIN --------------------------------
+dgs_parse_command_line
+dgs_execute_command_line

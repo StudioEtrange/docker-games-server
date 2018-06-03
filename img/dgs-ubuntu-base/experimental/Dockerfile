@@ -9,7 +9,10 @@ ENV DGS_IMAGE_TREE_ROOT "dgs-ubuntu-base"
 ENV DGS_IMAGE_NAME "dgs-ubuntu-base"
 ENV DGS_IMAGE_VERSION "experimental"
 
-ENV PATH /dgs/bin:${PATH}
+ENV DGS_VAR_VOLUME_ROOT /volumes
+ENV DGS_VAR_BACKUP_ROOT /backup
+
+ENV PATH /dgs/borg:/dgs/crudini:/dgs/bin:${PATH}
 
 LABEL com.studioetrange.dgs 1
 LABEL com.studioetrange.dgs.base "${DGS_IMAGE_BASE}"
@@ -17,7 +20,6 @@ LABEL com.studioetrange.dgs.type "${DGS_IMAGE_TYPE}"
 LABEL com.studioetrange.dgs.tree-root "${DGS_IMAGE_TREE_ROOT}"
 LABEL com.studioetrange.dgs.name "${DGS_IMAGE_NAME}"
 LABEL com.studioetrange.dgs.version "${DGS_IMAGE_VERSION}"
-LABEL com.studioetrange.dgs.access "SSH SUPERVISOR C9"
 
 # BUILD TIME VARIABLES --------------------------------------------
 ARG HTTP_PROXY
@@ -28,7 +30,10 @@ ARG NO_PROXY
 ARG no_proxy
 
 # TREE FILESYSTEM --------------------------------------------------
-RUN mkdir -p /etc/supervisor && mkdir -p /var/log/supervisor && mkdir -p /dgs && mkdir -p /dgs/bin && mkdir -p /volumes
+RUN mkdir -p /etc/supervisor && mkdir -p /var/log/supervisor \
+    && mkdir -p /dgs && mkdir -p /dgs/bin && mkdir -p /dgs/lib \
+    && mkdir -p ${DGS_VAR_VOLUME_ROOT} \
+    && mkdir -p ${DGS_VAR_BACKUP_ROOT}
 
 
 # COMPONENTS -------------------------------------------------------
@@ -39,6 +44,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	curl \
   git \
 	nano \
+  # for crudini \
+  python-iniparse \
 	ssh \
 	screenfetch \
   supervisor \
@@ -100,6 +107,22 @@ RUN apt-get update \
    && npm cache clean --force && rm -rf /var/cache/apk/* /tmp/* /var/tmp/* \
    && git reset --hard
 
+# borg backup
+RUN mkdir -p /dgs/borg \
+   && curl -fkSL https://github.com/borgbackup/borg/releases/download/1.1.5/borg-linux64 -o /dgs/borg/borg \
+   && chmod +x /dgs/borg/borg
+
+
+# crudini
+# modify ini files
+# http://www.pixelbeat.org/programs/crudini/
+# https://github.com/StudioEtrange/crudini
+RUN mkdir -p /dgs/crudini \
+   && curl -fkSL https://raw.githubusercontent.com/StudioEtrange/crudini/0.9/crudini -o /dgs/crudini/crudini \
+   && chmod +x /dgs/crudini/crudini
+
+# shell functions
+ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_base.sh /dgs/lib/dgs_functions_base.sh
 
 
 # SUPERVISOR ---------------------------------------------------------
@@ -120,6 +143,9 @@ EXPOSE 9999
 EXPOSE 22
 # Cloud9
 EXPOSE 8181
+
+# volumes
+VOLUME ${DGS_VAR_VOLUME_ROOT}
 
 # entrypoint
 COPY img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh

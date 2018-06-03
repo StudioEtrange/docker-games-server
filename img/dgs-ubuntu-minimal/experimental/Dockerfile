@@ -1,6 +1,6 @@
 FROM dgs-ubuntu-base:experimental
 LABEL maintainer "StudioEtrange <sboucault@gmail.com>"
-LABEL description "docker-games-server minimal image"
+LABEL description "docker-games-server minimal gaming image"
 
 
 ENV DGS_IMAGE_BASE "dgs-ubuntu-base:experimental"
@@ -10,7 +10,7 @@ ENV DGS_IMAGE_NAME "dgs-ubuntu-minimal"
 ENV DGS_IMAGE_VERSION "experimental"
 
 
-ENV PATH /dgs/steamcmd:/dgs/crudini:${PATH}
+ENV PATH /dgs/steamcmd:${PATH}
 
 
 LABEL com.studioetrange.dgs 1
@@ -32,7 +32,6 @@ ARG no_proxy
 # TREE FILESYSTEM --------------------------------------------------
 
 
-
 # COMPONENTS -------------------------------------------------------
 
 # Wine
@@ -47,8 +46,6 @@ RUN dpkg --add-architecture i386 \
 	    wine32=3.0-1ubuntu1 \
 	    wine64=3.0-1ubuntu1 \
 	    wine-stable=3.0-1ubuntu1 \
-	    # for crudini \
-	    python-iniparse \
  && rm -rf /var/lib/apt/lists/*
 
 
@@ -60,18 +57,6 @@ RUN mkdir -p /dgs/steamcmd \
     && rm /opt/steamcmd_linux.tar.gz
 
 
-# crudini
-# modify ini files
-# http://www.pixelbeat.org/programs/crudini/
-# https://github.com/StudioEtrange/crudini
-RUN mkdir -p /dgs/crudini \
-    && curl -fkSL https://raw.githubusercontent.com/StudioEtrange/crudini/0.9/crudini -o /dgs/crudini/crudini \
-    && chmod +x /dgs/crudini/crudini
-
-
-
-# shell functions
-ADD img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/dgs_functions_base.sh /dgs/bin/dgs_functions_base.sh
 
 
 # SUPERVISOR ---------------------------------------------------------
@@ -85,9 +70,10 @@ EXPOSE 22
 # Cloud9
 EXPOSE 8181
 
+# volumes
+VOLUME ${DGS_VAR_VOLUME_ROOT}
+
 # entrypoint
-COPY img/${DGS_IMAGE_NAME}/${DGS_IMAGE_VERSION}/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 ENTRYPOINT ["docker-entrypoint.sh"]
 
 # default command
