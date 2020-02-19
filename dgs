@@ -165,16 +165,17 @@ declare -A DGS_LAUNCH_OPTIONS
 dgs_launch_options_array() {
 	_image="$1"
 
-	_public_launch_options="$(dgs_get_docker_label "${_image}" "DGS_VAR_PUBLIC_LAUNCH_OPTIONS")"
+	_public_launch_options="$(dgs_get_docker_label "${_image}" "com.studioetrange.dgs.public.launch-options")"
 	f=0
 	for o in ${_public_launch_options}; do
 		if [ "$f" = "0" ]; then
 			_option_name="$o"
 			_var_name="${_option_name^^}"
+			f=1
 		else
 			_env_var_name="$o"
 			DGS_LAUNCH_OPTIONS[${_var_name}]=["${_option_name}:${_var_name}"]
-			f=1
+			f=0
 		fi
 	done
 }
@@ -200,6 +201,7 @@ dgs_launch_options_add() {
 		_options_list="${_options_list}
 		${key}=''				''			'string'			's'			0				''		Launcher option.
 		"
+	done
 	echo "${_options_list}"
 }
 
